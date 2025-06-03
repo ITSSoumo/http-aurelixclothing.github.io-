@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Aurelix Clothing Catalog</title>
+<style>
+  /* Reset and base */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: white;
+    color: black;
+    min-height: 100vh;
+    padding: 0 1rem 1rem;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #ccc;
+    z-index: 20;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: 0.1rem;
+    font-size: 1.8rem;
+    color: black;
+    flex: 1;
+  }
+  /* Hamburger Menu for modes */
+  #modeMenuBtn {
+    cursor: pointer;
+    width: 28px;
+    height: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 21;
+  }
+  #modeMenuBtn span {
+    height: 3px;
+    background: black;
+    border-radius: 2px;
+    display: block;
+  }
+
+  /* Mode menu dropdown */
+  #modeMenu {
+    position: fixed;
+    top: 58px;
+    right: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    z-index: 25;
+    width: 160px;
+    display: none;
+    flex-direction: column;
+  }
+  #modeMenu.visible {
+    display: flex;
+  }
+  #modeMenu button {
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 1rem;
+    cursor: pointer;
+    color: black;
+    width: 100%;
+  }
+  #modeMenu button:hover,
+  #modeMenu button.active {
+    background-color: #efefef;
+    font-weight: 700;
+  }
+
+  #productForm {
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 8px;
+    display: none;
+    z-index: 10;
+  }
+  #productForm.visible {
+    display: block;
+  }
+  #productForm label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    color: black;
+  }
+  #productForm input[type=text],
+  #productForm input[type=number] {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-style: normal;
+    color: black;
+  }
+  /* Visible file input for add form */
+  #productForm input[type=file] {
+    width: 100%;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    background: #eee;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0.3rem 0.4rem;
+    color: black;
+    font-style: normal;
+  }
+  #productForm button {
+    background: black;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1rem;
+    transition: background-color 0.2s ease;
+  }
+  #productForm button:hover {
+    background-color: #333;
+  }
+
+  main {
+    flex: 1;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+  }
+  .product-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .product-item {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    position: relative;
+  }
+  .product-image-container {
+    width: 100%;
+    max-height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ddd;
+    border: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  .product-image-container img {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+  }
+  /* Hide file inputs from product cards */
+  .product-image-container input[type=file] {
+    display: none;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .product-info input {
+    background: transparent;
+    border: none;
+    color: black;
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-style: italic;
+    padding: 0;
+    margin: 0;
+    cursor: default;
+    user-select: text;
+  }
+  .product-info input[readonly] {
+    cursor: default;
+  }
+  .product-info input.editable {
+    border-bottom: 1px dashed #999;
+    cursor: text;
+  }
+  .price-container {
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-family: monospace;
+    color: black;
+    margin-top: 0.2rem;
+    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .price-base,
+  .price-gst-amount,
+  .price-total {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .price-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.85rem;
+    min-width: 70px;
+  }
+  .currency-icon {
+    font-weight: 700;
+    font-style: normal;
+  }
+  .price-value {
+    color: black;
+    font-weight: 700;
+  }
+  .price-gst-amount {
+    color: #444;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 0.95rem;
+  }
+  .price-total {
+    color: black;
+    font-weight: 800;
+    font-size: 1.15rem;
+  }
+
+  /* Delete mode checkbox */
+  .delete-checkbox {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    transform: scale(1.3);
+    cursor: pointer;
+    display: none;
+  }
+  .product-item.delete-mode .delete-checkbox {
+    display: block;
+  }
+
+  /* Delete selected button */
+  #deleteSelectedBtn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: crimson;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 30;
+  }
+  #deleteSelectedBtn:hover {
+    background: darkred;
+  }
+
+  /* Modal styles */
+  #imageModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right:0;
+    bottom:0;
+    background-color: rgba(0,0,0,0.85);
+    display: none;
+    justify-content:center;
+    align-items:center;
+    z-index: 1000;
+  }
+  #imageModal.visible {
+    display: flex;
+  }
+  #imageModal img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    user-select: none;
+  }
+  #modalCloseBtn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #fff;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1001;
+    color: #333;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  #modalCloseBtn:hover {
+    background: #ddd;
+  }
+
+  @media (max-width: 500px) {
+    /* Force 2 columns on mobile devices */
+    .product-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    #deleteSelectedBtn {
+      width: calc(100% - 40px);
+      left: 20px;
+      transform: none;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Aurelix Clothing</h1>
+  <div id="modeMenuBtn" title="Menu" aria-label="Open menu" role="button" tabindex="0">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <nav id="modeMenu" aria-label="Mode selection menu">
+    <button id="homeModeBtn" type="button">Home</button>
+    <button id="addModeBtn" type="button">Add Products</button>
+    <button id="editModeBtn" type="button">Edit Products</button>
+    <button id="deleteModeBtn" type="button">Delete Products</button>
+  </nav>
+</header>
+
+<section id="productForm" aria-hidden="true" aria-label="Add product form">
+  <label for="productName">Product Name</label>
+  <input type="text" id="productName" placeholder="Enter product name" autocomplete="off" required />
+  
+  <label for="productPrice">Product Price</label>
+  <input type="number" id="productPrice" min="0" step="0.01" placeholder="Enter price" required />
+  
+  <label for="productGst">GST % (optional)</label>
+  <input type="number" id="productGst" min="0" step="0.01" placeholder="Enter GST percentage (e.g. 18)" />
+  
+  <label for="productImage">Product Image</label>
+  <input type="file" id="productImage" accept="image/*" aria-describedby="imgHelpText" />
+  <small id="imgHelpText" style="color:#666;">Optional. Upload an image (max ~1MB recommended).</small>
+  
+  <button id="addProductBtn">Add Product</button>
+</section>
+
+<main>
+  <div class="product-list" id="productList" aria-live="polite" aria-relevant="additions removals" tabindex="0" role="list">
+    <!-- Products will appear here -->
+  </div>
+</main>
+<!-- Delete selection confirm -->
+<button id="deleteSelectedBtn" aria-label="Delete selected products">Delete Selected</button>
+
+<!-- Image Modal -->
+<div id="imageModal" aria-modal="true" role="dialog" aria-label="Enlarged product image">
+  <button id="modalCloseBtn" aria-label="Close image modal">&times;</button>
+  <img src="" alt="Product large preview" />
+</div>
+
+<script>
+  const modeMenuBtn = document.getElementById("modeMenuBtn");
+  const modeMenu = document.getElementById("modeMenu");
+  const homeModeBtn = document.getElementById("homeModeBtn");
+  const addModeBtn = document.getElementById("addModeBtn");
+  const editModeBtn = document.getElementById("editModeBtn");
+  const deleteModeBtn = document.getElementById("deleteModeBtn");
+
+  const productForm = document.getElementById("productForm");
+  const addProductBtn = document.getElementById("addProductBtn");
+  const productList = document.getElementById("productList");
+  const productNameInput = document.getElementById("productName");
+  const productPriceInput = document.getElementById("productPrice");
+  const productGstInput = document.getElementById("productGst");
+  const productImageInput = document.getElementById("productImage");
+  const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+
+  const imageModal = document.getElementById('imageModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalImage = imageModal.querySelector('img');
+
+  const STORAGE_KEY = 'aurelix_clothing_products';
+
+  let products = [];
+  let mode = 'home'; // modes: 'home', 'add', 'edit', 'delete'
+
+  function formatNumber(num) {
+    return num.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function totalPrice(basePrice, gstPercent) {
+    if (gstPercent > 0) {
+      return +(basePrice * (1 + gstPercent / 100)).toFixed(2);
+    } else {
+      return +basePrice.toFixed(2);
+    }
+  }
+
+  function loadProducts() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  function saveProducts(products) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }
+
+  function openImageModal(src, alt) {
+    modalImage.src = src;
+    modalImage.alt = alt;
+    imageModal.classList.add('visible');
+    modalCloseBtn.focus();
+  }
+
+  function closeImageModal() {
+    imageModal.classList.remove('visible');
+    modalImage.src = '';
+    modalImage.alt = '';
+  }
+
+  modalCloseBtn.addEventListener('click', closeImageModal);
+  imageModal.addEventListener('click', e => {
+    if (e.target === imageModal) {
+      closeImageModal();
+    }
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && imageModal.classList.contains('visible')) {
+      closeImageModal();
+    }
+  });
+
+  function createPriceRow(labelText, valueText) {
+    const row = document.createElement('div');
+    row.className = labelText === 'GST %' ? 'price-gst-amount' : (labelText === 'Total Price' ? 'price-total' : 'price-base');
+    const label = document.createElement('span');
+    label.className = 'price-label';
+    label.textContent = labelText;
+    const currency = document.createElement('span');
+    currency.className = 'currency-icon';
+    currency.textContent = '₹';
+    const value = document.createElement('span');
+    value.className = 'price-value';
+    value.textContent = valueText;
+    row.appendChild(label);
+    row.appendChild(currency);
+    row.appendChild(value);
+    return row;
+  }
+
+  function createProductElement(product, index) {
+    const div = document.createElement('div');
+    div.className = 'product-item';
+    if(mode === 'delete'){
+      div.classList.add('delete-mode');
+    }
+
+    // Delete checkbox for delete mode
+    const deleteCheckbox = document.createElement('input');
+    deleteCheckbox.type = 'checkbox';
+    deleteCheckbox.className = 'delete-checkbox';
+    deleteCheckbox.setAttribute('aria-label', `Select to delete product ${product.name}`);
+    deleteCheckbox.dataset.index = index;
+    if(mode === 'delete'){
+      deleteCheckbox.style.display = 'block';
+    } else {
+      deleteCheckbox.style.display = 'none';
+    }
+    div.appendChild(deleteCheckbox);
+
+    const imageContainer = document.createElement('div');
+    imageContainer.className = 'product-image-container';
+    const img = document.createElement('img');
+    img.alt = product.name + " image";
+    img.src = product.image || 'https://via.placeholder.com/320x320/ddd/333?text=No+Image';
+    imageContainer.appendChild(img);
+
+    // Clicking image opens modal with large view ONLY
+    img.addEventListener('click', () => {
+      openImageModal(img.src, img.alt);
+    });
+    div.appendChild(imageContainer);
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'product-info';
+
+    // Name input editable only in edit mode
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = product.name;
+    nameInput.readOnly = (mode !== 'edit');
+    nameInput.classList.toggle('editable', mode === 'edit');
+    if(mode === 'edit'){
+      nameInput.setAttribute('aria-label', `Edit product name for ${product.name}`);
+      nameInput.style.cursor = 'text';
+    } else {
+      nameInput.setAttribute('aria-label', `Product name: ${product.name}`);
+      nameInput.style.cursor = 'default';
+    }
+    nameInput.addEventListener('change', e => {
+      if(mode === 'edit'){
+        products[index].name = e.target.value.trim() || 'Unnamed Product';
+        saveProducts(products);
+        renderProducts();
+      }
+    });
+    infoDiv.appendChild(nameInput);
+
+    // Price input editable only in edit mode
+    const priceInput = document.createElement('input');
+    priceInput.type = 'number';
+    priceInput.min = '0';
+    priceInput.step = '0.01';
+    priceInput.value = product.basePrice.toFixed(2);
+    priceInput.readOnly = (mode !== 'edit');
+    priceInput.classList.toggle('editable', mode === 'edit');
+    if(mode === 'edit'){
+      priceInput.setAttribute('aria-label', `Edit product price for ${product.name}`);
+      priceInput.style.cursor = 'text';
+    } else {
+      priceInput.setAttribute('aria-label', `Product price: ${product.basePrice.toFixed(2)}`);
+      priceInput.style.cursor = 'default';
+    }
+    priceInput.addEventListener('change', e => {
+      if(mode === 'edit'){
+        let val = parseFloat(e.target.value);
+        if(isNaN(val) || val < 0) val = 0;
+        products[index].basePrice = val;
+        saveProducts(products);
+        renderProducts();
+      }
+    });
+    infoDiv.appendChild(priceInput);
+
+    // GST input editable only in edit mode
+    const gstInput = document.createElement('input');
+    gstInput.type = 'number';
+    gstInput.min = '0';
+    gstInput.step = '0.01';
+    gstInput.value = product.gst !== undefined ? product.gst.toString() : '';
+    gstInput.placeholder = 'GST %';
+    gstInput.readOnly = (mode !== 'edit');
+    gstInput.classList.toggle('editable', mode === 'edit');
+    if(mode === 'edit'){
+      gstInput.setAttribute('aria-label', `Edit GST percentage for ${product.name}`);
+      gstInput.style.cursor = 'text';
+    } else {
+      gstInput.setAttribute('aria-label', `GST percentage: ${product.gst ?? 0}`);
+      gstInput.style.cursor = 'default';
+    }
+    gstInput.addEventListener('change', e => {
+      if(mode === 'edit'){
+        let val = parseFloat(e.target.value);
+        if(isNaN(val) || val < 0) val = 0;
+        products[index].gst = val;
+        saveProducts(products);
+        renderProducts();
+      }
+    });
+    infoDiv.appendChild(gstInput);
+
+    // Price container with Price, GST %, and Total Price with icons and labels
+    const priceContainer = document.createElement('div');
+    priceContainer.className = 'price-container';
+    // Price row
+    const priceRow = createPriceRow('Price', product.basePrice.toFixed(2));
+    priceContainer.appendChild(priceRow);
+    // GST row, only if gst > 0
+    if(product.gst && product.gst > 0){
+      const gstRow = createPriceRow('GST %', product.gst.toFixed(2));
+      priceContainer.appendChild(gstRow);
+    }
+    // Total price row
+    const total = totalPrice(product.basePrice, (product.gst || 0));
+    const totalRow = createPriceRow('Total Price', total.toFixed(2));
+    priceContainer.appendChild(totalRow);
+
+    infoDiv.appendChild(priceContainer);
+
+    div.appendChild(infoDiv);
+
+    return div;
+  }
+
+  function renderProducts() {
+    productList.innerHTML = '';
+    if(products.length === 0){
+      const emptyMsg = document.createElement('p');
+      emptyMsg.textContent = 'No products in catalog. Use the menu to add products.';
+      emptyMsg.style.color = '#444';
+      productList.appendChild(emptyMsg);
+      return;
+    }
+    products.forEach((p, idx) => {
+      productList.appendChild(createProductElement(p, idx));
+    });
+
+    if (mode === 'delete') {
+      deleteSelectedBtn.style.display = 'block';
+      updateDeleteButtonState();
+    } else {
+      deleteSelectedBtn.style.display = 'none';
+    }
+  }
+
+  function toggleModeMenu() {
+    modeMenu.classList.toggle('visible');
+  }
+
+  function closeModeMenu() {
+    modeMenu.classList.remove('visible');
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    closeModeMenu();
+
+    // Update active button style
+    homeModeBtn.classList.toggle('active', mode === 'home');
+    addModeBtn.classList.toggle('active', mode === 'add');
+    editModeBtn.classList.toggle('active', mode === 'edit');
+    deleteModeBtn.classList.toggle('active', mode === 'delete');
+
+    // Show/hide add product form only in add mode
+    if (mode === 'add') {
+      productForm.classList.add('visible');
+      productForm.setAttribute('aria-hidden', 'false');
+      productNameInput.focus();
+    } else {
+      productForm.classList.remove('visible');
+      productForm.setAttribute('aria-hidden', 'true');
+    }
+
+    renderProducts();
+  }
+
+  function addProduct() {
+    const name = productNameInput.value.trim();
+    let price = parseFloat(productPriceInput.value);
+    let gstVal = parseFloat(productGstInput.value);
+
+    if (!name) {
+      alert('Please enter a product name.');
+      productNameInput.focus();
+      return;
+    }
+    if (isNaN(price) || price < 0) {
+      alert('Please enter a valid product price (0 or more).');
+      productPriceInput.focus();
+      return;
+    }
+    if (isNaN(gstVal) || gstVal < 0) {
+      gstVal = 0;
+    }
+    const file = productImageInput.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const imageData = event.target.result;
+        products.push({ name, basePrice: price, gst: gstVal, image: imageData });
+        saveProducts(products);
+        renderProducts();
+        resetForm();
+        setMode('home');
+      };
+      reader.readAsDataURL(file);
+    } else {
+      products.push({ name, basePrice: price, gst: gstVal, image: '' });
+      saveProducts(products);
+      renderProducts();
+      resetForm();
+      setMode('home');
+    }
+  }
+
+  function resetForm() {
+    productNameInput.value = '';
+    productPriceInput.value = '';
+    productGstInput.value = '';
+    productImageInput.value = '';
+    productNameInput.focus();
+  }
+
+  function deleteSelectedProducts() {
+    if (!confirm('Are you sure you want to delete selected products?')) return;
+    const checkboxes = productList.querySelectorAll('.delete-checkbox:checked');
+    if (checkboxes.length === 0) {
+      alert('Please select at least one product to delete.');
+      return;
+    }
+    const indexesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+    indexesToDelete.sort((a,b)=>b-a);
+    for (const idx of indexesToDelete) {
+      products.splice(idx, 1);
+    }
+    saveProducts(products);
+    renderProducts();
+    updateDeleteButtonState();
+  }
+
+  function updateDeleteButtonState() {
+    const anyChecked = productList.querySelector('.delete-checkbox:checked') !== null;
+    deleteSelectedBtn.disabled = !anyChecked;
+  }
+
+  productList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('delete-checkbox')) {
+      updateDeleteButtonState();
+    }
+  });
+
+  modeMenuBtn.addEventListener('click', toggleModeMenu);
+  modeMenuBtn.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleModeMenu();
+    }
+  });
+
+  homeModeBtn.addEventListener('click', () => setMode('home'));
+  addModeBtn.addEventListener('click', () => setMode('add'));
+  editModeBtn.addEventListener('click', () => setMode('edit'));
+  deleteModeBtn.addEventListener('click', () => setMode('delete'));
+
+  addProductBtn.addEventListener('click', addProduct);
+  deleteSelectedBtn.addEventListener('click', deleteSelectedProducts);
+
+  document.addEventListener('click', (e) => {
+    if(!modeMenu.contains(e.target) && e.target !== modeMenuBtn) {
+      closeModeMenu();
+    }
+  });
+
+  products = loadProducts();
+  setMode('home');
+  renderProducts();
+</script>
+</body>
+</html>
